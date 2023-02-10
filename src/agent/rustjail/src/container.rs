@@ -1038,7 +1038,7 @@ impl BaseContainer for LinuxContainer {
             spec,
             &p,
             self.cgroup_manager.as_ref(),
-            self.config.use_systemd_cgroup,
+            self.config.use_systemd_cgroup.unwrap(),
             &st,
             &mut pipe_w,
             &mut pipe_r,
@@ -1481,23 +1481,27 @@ impl LinuxContainer {
         // determine which cgroup driver to take and then assign to config.use_systemd_cgroup
         // systemd: "[slice]:[prefix]:[name]"
         // fs: "/path_a/path_b"
-        let cpath = if SYSTEMD_CGROUP_PATH_FORMAT.is_match(linux.cgroups_path.as_str()) {
-            config.use_systemd_cgroup = true;
+        // Only perform auto-detection if the caller has not forced a specific cgroup driver.
+        // In agent-init mode we can't rely on systemd cgroup driver.
+        if config.use_systemd_cgroup.is_none() {
+            config.use_systemd_cgroup = Some(SYSTEMD_CGROUP_PATH_FORMAT.is_match(linux.cgroups_path.as_str()));
+        }
+        let cpath = if config.use_systemd_cgroup.unwrap() {
             if linux.cgroups_path.len() == 2 {
                 format!("system.slice:kata_agent:{}", id.as_str())
             } else {
                 linux.cgroups_path.clone()
             }
         } else {
-            config.use_systemd_cgroup = false;
             if linux.cgroups_path.is_empty() {
                 format!("/{}", id.as_str())
             } else {
-                linux.cgroups_path.clone()
+                // if we have a systemd cgroup path we need to convert it to a fs cgroup path
+                linux.cgroups_path.replace(":", "/")
             }
         };
 
-        let cgroup_manager: Box<dyn Manager + Send + Sync> = if config.use_systemd_cgroup {
+        let cgroup_manager: Box<dyn Manager + Send + Sync> = if config.use_systemd_cgroup.unwrap() {
             Box::new(SystemdManager::new(cpath.as_str()).map_err(|e| {
                 anyhow!(format!(
                     "fail to create cgroup manager with path {}: {:}",
@@ -1692,7 +1696,7 @@ mod tests {
 
         CreateOpts {
             cgroup_name: "".to_string(),
-            use_systemd_cgroup: false,
+            use_systemd_cgroup: Some(false),
             no_pivot_root: false,
             no_new_keyring: false,
             spec: Some(spec),

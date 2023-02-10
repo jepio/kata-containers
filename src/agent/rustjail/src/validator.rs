@@ -557,7 +557,7 @@ mod tests {
         let spec = Spec::default();
         let mut config = Config {
             cgroup_name: "container1".to_owned(),
-            use_systemd_cgroup: false,
+            use_systemd_cgroup: Some(false),
             no_pivot_root: true,
             no_new_keyring: true,
             rootless_euid: false,

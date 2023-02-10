@@ -691,7 +691,7 @@ mod tests {
 
         CreateOpts {
             cgroup_name: "".to_string(),
-            use_systemd_cgroup: false,
+            use_systemd_cgroup: Some(false),
             no_pivot_root: false,
             no_new_keyring: false,
             spec: Some(spec),

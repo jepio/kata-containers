@@ -137,6 +137,7 @@ macro_rules! is_allowed {
 #[derive(Clone, Debug)]
 pub struct AgentService {
     sandbox: Arc<Mutex<Sandbox>>,
+    init_mode: bool,
 }
 
 impl AgentService {
@@ -210,9 +211,11 @@ impl AgentService {
         // restore the cwd for kata-agent process.
         defer!(unistd::chdir(&olddir).unwrap());
 
+        // if agent is init we can't use systemd cgroup mode, no matter what the host tells us
+        let use_systemd_cgroup = if self.init_mode { Some(false) } else { None };
         let opts = CreateOpts {
             cgroup_name: "".to_string(),
-            use_systemd_cgroup: false,
+            use_systemd_cgroup: use_systemd_cgroup,
             no_pivot_root: s.no_pivot_root,
             no_new_keyring: false,
             spec: Some(oci.clone()),
@@ -1673,9 +1676,9 @@ async fn read_stream(reader: Arc<Mutex<ReadHalf<PipeStream>>>, l: usize) -> Resu
     Ok(content)
 }
 
-pub fn start(s: Arc<Mutex<Sandbox>>, server_address: &str) -> Result<TtrpcServer> {
+pub fn start(s: Arc<Mutex<Sandbox>>, server_address: &str, init_mode: bool) -> Result<TtrpcServer> {
     let agent_service =
-        Box::new(AgentService { sandbox: s }) as Box<dyn agent_ttrpc::AgentService + Send + Sync>;
+        Box::new(AgentService { sandbox: s, init_mode: init_mode }) as Box<dyn agent_ttrpc::AgentService + Send + Sync>;
 
     let agent_worker = Arc::new(agent_service);
 
@@ -2078,7 +2081,7 @@ mod tests {
 
         CreateOpts {
             cgroup_name: "".to_string(),
-            use_systemd_cgroup: false,
+            use_systemd_cgroup: Some(false),
             no_pivot_root: false,
             no_new_keyring: false,
             spec: Some(spec),
