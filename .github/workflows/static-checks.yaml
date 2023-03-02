@@ -1,4 +1,7 @@
 on:
+  push:
+    branches:
+      - 'CCv0'
   pull_request:
     types:
       - opened
