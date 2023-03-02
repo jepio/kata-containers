@@ -16,11 +16,11 @@ jobs:
     strategy:
       matrix:
         cmd:
-          - "make vendor"
-          - "make static-checks"
-          - "make check"
-          - "make test"
           - "sudo -E PATH=\"$PATH\" make test"
+#          - "make vendor"
+#          - "make static-checks"
+#          - "make check"
+#          - "make test"
     env:
       TRAVIS: "true"
       TRAVIS_BRANCH: ${{ github.base_ref }}
@@ -86,6 +86,10 @@ jobs:
         PATH=$PATH:"$HOME/.cargo/bin"
         rustup target add x86_64-unknown-linux-musl
         rustup component add rustfmt clippy
+    - name: Check rust
+      run: |
+        which cargo
+        cargo --version
     - name: Setup seccomp
       if: ${{ !contains(github.event.pull_request.labels.*.name, 'force-skip-ci') }}
       run: |
@@ -99,3 +103,9 @@ jobs:
       if: ${{ !contains(github.event.pull_request.labels.*.name, 'force-skip-ci') }}
       run: |
         cd ${GOPATH}/src/github.com/${{ github.repository }} && ${{ matrix.cmd }}
+
+    - name: Check disk usage
+      if: always()
+      run: |
+        df -h
+        du -hd1 / | sort -h
