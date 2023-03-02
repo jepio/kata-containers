@@ -90,6 +90,8 @@ jobs:
       run: |
         which cargo
         cargo --version
+        apt-get update
+        apt-get install -y protobuf-compiler
     - name: Setup seccomp
       if: ${{ !contains(github.event.pull_request.labels.*.name, 'force-skip-ci') }}
       run: |
@@ -108,4 +110,4 @@ jobs:
       if: always()
       run: |
         df -h
-        du -hd1 / | sort -h
+        du -hd1 / 2>/dev/null | sort -h
