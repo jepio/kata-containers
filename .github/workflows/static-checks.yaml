@@ -27,6 +27,7 @@ jobs:
       TRAVIS_PULL_REQUEST_BRANCH: ${{ github.head_ref }}
       TRAVIS_PULL_REQUEST_SHA : ${{ github.event.pull_request.head.sha }}
       RUST_BACKTRACE: "1"
+      RUST_TEST_TASKS: 4
       target_branch: ${{ github.base_ref }}
     steps:
     - name: Free space
