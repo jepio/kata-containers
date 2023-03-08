@@ -1,0 +1,42 @@
+name: Update CC dependencies
+on:
+  push:
+    branches:
+    - "CCv0"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-deps:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout-code
+      uses: actions/checkout@v3
+
+    - name: update-deps
+      id: update-deps
+      run: |
+        ./ci/install_yq.sh
+        ./ci/cc-update-deps.sh
+
+    - name: create-pull-request
+      uses: peter-evans/create-pull-request@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        branch: "ccv0-update-deps"
+        title: "CC | Update image-rs/attestation-agent"
+        commit-message: |
+          Update CCv0 dependencies to latest HEAD
+
+          Update image-rs to ${{ steps.update-deps.outputs.image-rs-rev }}.
+          Update attestation-agent to ${{ steps.update-deps.outputs.aa-rev }}.
+          Update td-shim to ${{ steps.update-deps.outputs.td-shim-rev }}.
+        committer: GitHub <noreply@github.com>
+        author: GitHub <noreply@github.com>
+        #author: GitHub <${{ github.actor }}@users.noreply.github.com>
+        delete-branch: true
+        reviewers: jepio
+        assignees: jepio
