@@ -3,7 +3,7 @@
 set -eux
 
 set_output() {
-  if [ -z "${GITHUB_OUTPUT}" ];
+  if [ -z "${GITHUB_OUTPUT:-}" ]; then
     return
   fi
   echo "$1=$2" >> "${GITHUB_OUTPUT}"
