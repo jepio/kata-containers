@@ -110,7 +110,7 @@ rootfs-image-tdx-tarball: kernel-tdx-experimental-tarball
 	${MAKE} $@-build
 
 rootfs-initrd-mariner-tarball:
-	exit 0
+	${MAKE} $@-build
 
 rootfs-initrd-sev-tarball: kernel-sev-tarball
 	${MAKE} $@-build

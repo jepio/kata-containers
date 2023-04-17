@@ -55,6 +55,7 @@ docker run \
 	-v "${kata_dir}:${kata_dir}" \
 	--env CI="${CI:-}" \
 	--env USER=${USER} \
+	--env DEFAULT_HOST_OS="${DEFAULT_HOST_OS:-"ubuntu"}" \
 	--env BUILDER_REGISTRY="${BUILDER_REGISTRY:-}" \
 	--env PUSH_TO_REGISTRY="${PUSH_TO_REGISTRY:-"no"}" \
 	--env INITRAMFS_CONTAINER_BUILDER="${INITRAMFS_CONTAINER_BUILDER:-}" \

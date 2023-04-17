@@ -28,40 +28,50 @@ image_initrd_extension=".img"
 
 build_initrd() {
 	info "Build initrd"
-	info "initrd os: $initrd_distro"
-	info "initrd os version: $initrd_os_version"
+	info "default host os: $is_default"
+	info "initrd os: $os_name"
+	info "initrd os version: $os_version"
 	sudo -E PATH="$PATH" make initrd \
-		DISTRO="$initrd_distro" \
+		DISTRO="$os_name" \
 		DEBUG="${DEBUG:-}" \
-		OS_VERSION="${initrd_os_version}" \
+		OS_VERSION="${os_version}" \
 		ROOTFS_BUILD_DEST="${builddir}/initrd-image" \
 		USE_DOCKER=1 \
 		AGENT_INIT="yes"
-	mv "kata-containers-initrd.img" "${install_dir}/${initrd_name}"
-	(
-		cd "${install_dir}"
-		ln -sf "${initrd_name}" "${final_initrd_name}${image_initrd_extension}"
-	)
+	mv "kata-containers-initrd.img" "${install_dir}/${artifact_name}"
+	# Only symlink for the default host OS to avoid unintentionally overriding
+	# the link in case we build out of order.
+	if [ "${is_default}" = "yes" ]; then
+		(
+			cd "${install_dir}"
+			ln -sf "${artifact_name}" "${final_initrd_name}${image_initrd_extension}"
+		)
+	fi
 }
 
 build_image() {
 	info "Build image"
-	info "image os: $img_distro"
-	info "image os version: $img_os_version"
+	info "default host os: $is_default"
+	info "image os: $os_name"
+	info "image os version: $os_version"
 	sudo -E PATH="${PATH}" make image \
-		DISTRO="${img_distro}" \
+		DISTRO="${os_name}" \
 		DEBUG="${DEBUG:-}" \
 		USE_DOCKER="1" \
-		IMG_OS_VERSION="${img_os_version}" \
+		IMG_OS_VERSION="${os_version}" \
 		ROOTFS_BUILD_DEST="${builddir}/rootfs-image"
-	mv -f "kata-containers.img" "${install_dir}/${image_name}"
+	mv -f "kata-containers.img" "${install_dir}/${artifact_name}"
 	if [ -e "root_hash.txt" ]; then
 	    cp root_hash.txt "${install_dir}/"
 	fi
-	(
-		cd "${install_dir}"
-		ln -sf "${image_name}" "${final_image_name}${image_initrd_extension}"
-	)
+	# Only symlink for the default host OS to avoid unintentionally overriding
+	# the link in case we build out of order.
+	if [ "${is_default}" = "yes" ]; then
+		(
+			cd "${install_dir}"
+			ln -sf "${artifact_name}" "${final_image_name}${image_initrd_extension}"
+		)
+	fi
 }
 
 usage() {
@@ -74,6 +84,9 @@ Usage:
 ${script_name} [options]
 
 Options:
+ --isdefault=${is_default}
+ --osname=${os_name}
+ --osversion=${os_version}
  --imagetype=${image_type}
  --prefix=${prefix}
  --destdir=${destdir}
@@ -94,33 +107,23 @@ main() {
 		case "$opt" in
 		-)
 			case "${OPTARG}" in
+			isdefault=*)
+				is_default=${OPTARG#*=}
+				;;
+			osname=*)
+				os_name=${OPTARG#*=}
+				;;
+			osversion=*)
+				os_version=${OPTARG#*=}
+				;;
 			imagetype=image)
 				image_type=image
-				#image information
-				img_distro=$(get_from_kata_deps "assets.image.architecture.${arch_target}.name")
-				img_os_version=$(get_from_kata_deps "assets.image.architecture.${arch_target}.version")
-				image_name="kata-${img_distro}-${img_os_version}.${image_type}"
 				;;
 			imagetype=initrd)
 				image_type=initrd
-				#initrd information
-				initrd_distro=$(get_from_kata_deps "assets.initrd.architecture.${arch_target}.name")
-				initrd_os_version=$(get_from_kata_deps "assets.initrd.architecture.${arch_target}.version")
-				initrd_name="kata-${initrd_distro}-${initrd_os_version}.${image_type}"
 				;;
 			image_initrd_suffix=*)
 				image_initrd_suffix=${OPTARG#*=}
-				if [ "${image_initrd_suffix}" == "sev" ]; then
-					initrd_distro=$(get_from_kata_deps "assets.initrd.architecture.${arch_target}.sev.name")
-					initrd_os_version=$(get_from_kata_deps "assets.initrd.architecture.${arch_target}.sev.version")
-					initrd_name="kata-${initrd_distro}-${initrd_os_version}-${image_initrd_suffix}.${image_type}"
-					final_initrd_name="${final_initrd_name}-${image_initrd_suffix}"
-				elif [ "${image_initrd_suffix}" == "tdx" ]; then
-					img_distro=$(get_from_kata_deps "assets.image.architecture.${arch_target}.name")
-					img_os_version=$(get_from_kata_deps "assets.image.architecture.${arch_target}.version")
-					image_name="kata-${img_distro}-${img_os_version}-${image_initrd_suffix}.${image_type}"
-					final_image_name="${final_image_name}-${image_initrd_suffix}"
-				fi
 				;;
 			prefix=*)
 				prefix=${OPTARG#*=}
@@ -149,7 +152,15 @@ main() {
 
 	echo "build ${image_type}"
 
-
+	if [ "${image_initrd_suffix}" == "sev" ]; then
+		artifact_name="kata-${os_name}-${os_version}-${image_initrd_suffix}.${image_type}"
+		final_initrd_name="${final_initrd_name}-${image_initrd_suffix}"
+	elif [ "${image_initrd_suffix}" == "tdx" ]; then
+		artifact_name="kata-${os_name}-${os_version}-${image_initrd_suffix}.${image_type}"
+		final_image_name="${final_image_name}-${image_initrd_suffix}"
+	else
+		artifact_name="kata-${os_name}-${os_version}.${image_type}"
+	fi
 
 	install_dir="${destdir}/${prefix}/share/kata-containers/"
 	readonly install_dir

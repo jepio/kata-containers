@@ -97,6 +97,7 @@ options:
 	rootfs-image
 	rootfs-image-tdx
 	rootfs-initrd
+	rootfs-initrd-mariner
 	rootfs-initrd-sev
 	shim-v2
 	tdvf
@@ -136,8 +137,21 @@ install_cached_tarball_component() {
 
 #Install guest image
 install_image() {
-	local image_type="${1:-"image"}"
-	local initrd_suffix="${2:-""}"
+	local host_os="${1:-"${DEFAULT_HOST_OS}"}"
+	local initrd_suffix="${2:-}"
+
+	if [ "${host_os}" = "${DEFAULT_HOST_OS}" ]; then
+		image_type="image"
+		is_default="yes"
+	else
+		image_type="image-${host_os}"
+		is_default="no"
+	fi
+
+	if [ -n "${initrd_suffix}" ]; then
+		image_type+="-${initrd_suffix}"
+	fi
+
 	local jenkins="${jenkins_url}/job/kata-containers-main-rootfs-${image_type}-$(uname -m)/${cached_artifacts_path}"
 	local component="rootfs-${image_type}"
 
@@ -152,25 +166,40 @@ install_image() {
 	install_cached_tarball_component \
 		"${component}" \
 		"${jenkins}" \
-		"${osbuilder_last_commit}-${guest_image_last_commit}-${agent_last_commit}-${libs_last_commit}-${gperf_version}-${libseccomp_version}-${rust_version}-image" \
+		"${osbuilder_last_commit}-${guest_image_last_commit}-${agent_last_commit}-${libs_last_commit}-${gperf_version}-${libseccomp_version}-${rust_version}-${image_type}" \
 		"" \
 		"${final_tarball_name}" \
 		"${final_tarball_path}" \
 		&& return 0
 
 	info "Create image"
-	"${rootfs_builder}" --imagetype=image --prefix="${prefix}" --destdir="${destdir}" --image_initrd_suffix="${initrd_suffix}"
+	os_name="$(get_from_kata_deps "assets.image.host_os.${host_os}.architecture.${ARCH}.name")"
+	os_version="$(get_from_kata_deps "assets.image.host_os.${host_os}.architecture.${ARCH}.version")"
+	"${rootfs_builder}" --isdefault="${is_default}" --osname="${os_name}" --osversion="${os_version}" --imagetype=image --prefix="${prefix}" --destdir="${destdir}" --image_initrd_suffix="${initrd_suffix}"
 }
 
 #Install guest image for tdx
 install_image_tdx() {
-	install_image "image-tdx" "tdx"
+	install_image "${DEFAULT_HOST_OS}" "tdx"
 }
 
 #Install guest initrd
 install_initrd() {
-	local initrd_type="${1:-"initrd"}"
-	local initrd_suffix="${2:-""}"
+	local host_os="${1:-"${DEFAULT_HOST_OS}"}"
+	local initrd_suffix="${2:-}"
+
+	if [ "${host_os}" = "${DEFAULT_HOST_OS}" ]; then
+		initrd_type="initrd"
+		is_default="yes"
+	else
+		initrd_type="initrd-${host_os}"
+		is_default="no"
+	fi
+
+	if [ -n "${initrd_suffix}" ]; then
+		initrd_type+="-${initrd_suffix}"
+	fi
+
 	local jenkins="${jenkins_url}/job/kata-containers-main-rootfs-${initrd_type}-$(uname -m)/${cached_artifacts_path}"
 	local component="rootfs-${initrd_type}"
 
@@ -192,12 +221,26 @@ install_initrd() {
 		&& return 0
 
 	info "Create initrd"
-	"${rootfs_builder}" --imagetype=initrd --prefix="${prefix}" --destdir="${destdir}" --image_initrd_suffix="${initrd_suffix}"
+
+	if [ "${initrd_suffix}" = "sev" ]; then
+		os_name="$(get_from_kata_deps "assets.initrd.host_os.${host_os}.architecture.${ARCH}.sev.name")"
+		os_version="$(get_from_kata_deps "assets.initrd.host_os.${host_os}.architecture.${ARCH}.sev.version")"
+	else
+		os_name="$(get_from_kata_deps "assets.initrd.host_os.${host_os}.architecture.${ARCH}.name")"
+		os_version="$(get_from_kata_deps "assets.initrd.host_os.${host_os}.architecture.${ARCH}.version")"
+	fi
+
+	"${rootfs_builder}" --isdefault="${is_default}"  --osname="${os_name}" --osversion="${os_version}" --imagetype=initrd --prefix="${prefix}" --destdir="${destdir}" --image_initrd_suffix="${initrd_suffix}"
+}
+
+#Install Mariner guest initrd
+install_initrd_mariner() {
+	install_initrd "cbl-mariner"
 }
 
 #Install guest initrd for sev
 install_initrd_sev() {
-	install_initrd "initrd-sev" "sev"
+	install_initrd "${DEFAULT_HOST_OS}" "sev"
 }
 
 #Install kernel component helper
@@ -561,6 +604,7 @@ handle_build() {
 		install_firecracker
 		install_image
 		install_initrd
+		install_initrd_mariner
 		install_initrd_sev
 		install_kernel
 		install_kernel_dragonball_experimental
@@ -614,6 +658,8 @@ handle_build() {
 
 	rootfs-initrd) install_initrd ;;
 
+	rootfs-initrd-mariner) install_initrd_mariner ;;
+
 	rootfs-initrd-sev) install_initrd_sev ;;
 	
 	shim-v2) install_shimv2 ;;
@@ -658,6 +704,7 @@ main() {
 		qemu
 		rootfs-image
 		rootfs-initrd
+		rootfs-initrd-mariner
 		shim-v2
 		virtiofsd
 	)

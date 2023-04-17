@@ -5,6 +5,9 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+set -x
+
+
 # If we fail for any reason a message will be displayed
 die() {
 	msg="$*"
@@ -82,6 +85,8 @@ function install_yq() {
 	if ! command -v "${yq_path}" >/dev/null; then
 		die "Cannot not get ${yq_path} executable"
 	fi
+
+	hash -d yq || true
 }
 
 install_yq
