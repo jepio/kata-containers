@@ -59,6 +59,7 @@ function run_tests() {
     platform="${1}"
 
     sed -i -e "s|quay.io/kata-containers/kata-deploy:latest|${DOCKER_REGISTRY}/${DOCKER_REPO}:${DOCKER_TAG}|g" "${tools_dir}/packaging/kata-deploy/kata-deploy/base/kata-deploy.yaml"
+    sed -i -e "s|ubuntu|${KATA_HOST_OS}|g" "${tools_dir}/packaging/kata-deploy/kata-deploy/base/kata-deploy.yaml"
     cat "${tools_dir}/packaging/kata-deploy/kata-deploy/base/kata-deploy.yaml"
     cat "${tools_dir}/packaging/kata-deploy/kata-deploy/base/kata-deploy.yaml" | grep "${DOCKER_REGISTRY}/${DOCKER_REPO}:${DOCKER_TAG}" || die "Failed to setup the tests image"
 

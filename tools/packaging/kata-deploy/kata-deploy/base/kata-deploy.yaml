@@ -28,6 +28,8 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
+        - name: HOST_OS
+          value: ubuntu
         securityContext:
           privileged: true
         volumeMounts:

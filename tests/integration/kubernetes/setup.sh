@@ -16,6 +16,13 @@ set_runtime_class() {
     sed -i -e "s|runtimeClassName: kata|runtimeClassName: kata-${KATA_HYPERVISOR}|" ${kubernetes_dir}/runtimeclass_workloads/*.yaml
 }
 
+set_kernel_path() {
+    if [[ "${KATA_HOST_OS}" = "cbl-mariner" ]]; then
+        mariner_kernel_path="/usr/share/cloud-hypervisor/vmlinux.bin"
+        find ${kubernetes_dir}/runtimeclass_workloads/*.yaml -exec yq write -i {} 'metadata.annotations[io.katacontainers.config.hypervisor.kernel]' "${mariner_kernel_path}" \;
+    fi
+}
+
 set_initrd_path() {
     arch="$(uname -m)"
     img_distro="$(get_from_kata_deps "assets.initrd.host_os.${KATA_HOST_OS}.architecture.${arch}.name")"
@@ -33,6 +40,7 @@ main() {
     echo ${GOPATH:-}
     echo ${INSTALL_IN_GOPATH:-}
     set_runtime_class
+    set_kernel_path
     set_initrd_path
 }
 
