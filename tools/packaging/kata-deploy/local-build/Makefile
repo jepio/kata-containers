@@ -56,7 +56,7 @@ cloud-hypervisor-tarball:
 	${MAKE} $@-build
 
 cloud-hypervisor-glibc-tarball:
-	exit 0
+	${MAKE} $@-build
 
 firecracker-tarball:
 	${MAKE} $@-build
