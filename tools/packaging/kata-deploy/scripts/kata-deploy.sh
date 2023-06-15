@@ -65,7 +65,8 @@ function install_artifacts() {
 	[ -d /opt/kata/runtime-rs/bin ] && \
 		chmod +x /opt/kata/runtime-rs/bin/*
 
-	# Allow Mariner to use custom configuration.
+	# TODO: either probe this (but allow user to override) or ship a mariner
+	# 		specific config somewhere by default
 	if [ "${HOST_OS:-}" == "cbl-mariner" ]; then
 		config_path="/opt/kata/share/defaults/kata-containers/configuration-clh.toml"
 		clh_path="/opt/kata/bin/cloud-hypervisor-glibc"

@@ -24,12 +24,15 @@ set_kernel_path() {
 }
 
 set_initrd_path() {
-    arch="$(uname -m)"
-    img_distro="$(get_from_kata_deps "assets.initrd.host_os.${KATA_HOST_OS}.architecture.${arch}.name")"
-    img_os_version="$(get_from_kata_deps "assets.initrd.host_os.${KATA_HOST_OS}.architecture.${arch}.version")"
-    initrd_name="kata-${img_distro}-${img_os_version}.initrd"
-    initrd_path="/opt/kata/share/kata-containers/${initrd_name}"
-    find ${kubernetes_dir}/runtimeclass_workloads/*.yaml -exec yq write -i {} 'metadata.annotations[io.katacontainers.config.hypervisor.initrd]' "${initrd_path}" \;
+    if [[ "${KATA_HOST_OS}" = "cbl-mariner" ]]; then
+        arch="$(uname -m)"
+        # use mariner flavored initrd
+        img_os_name="$(get_from_kata_deps "assets.initrd.architecture.${arch}.${KATA_HOST_OS}.name")"
+        img_os_version="$(get_from_kata_deps "assets.initrd.architecture.${arch}.${KATA_HOST_OS}.version")"
+        initrd_name="kata-${img_distro}-${img_os_version}.initrd"
+        initrd_path="/opt/kata/share/kata-containers/${initrd_name}"
+        find ${kubernetes_dir}/runtimeclass_workloads/*.yaml -exec yq write -i {} 'metadata.annotations[io.katacontainers.config.hypervisor.initrd]' "${initrd_path}" \;
+    fi
 }
 
 main() {

@@ -66,7 +66,7 @@ build_image() {
 	fi
 	# Only symlink for the default host OS to avoid unintentionally overriding
 	# the link in case we build out of order.
-	if [ "${is_default}" = "yes" ]; then
+	if [ -z "${image_initrd_suffix}" ]; then
 		(
 			cd "${install_dir}"
 			ln -sf "${artifact_name}" "${final_image_name}${image_initrd_extension}"
@@ -84,7 +84,6 @@ Usage:
 ${script_name} [options]
 
 Options:
- --isdefault=${is_default}
  --osname=${os_name}
  --osversion=${os_version}
  --imagetype=${image_type}

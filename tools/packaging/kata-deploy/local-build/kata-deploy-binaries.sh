@@ -186,24 +186,16 @@ install_image() {
 
 #Install guest image for tdx
 install_image_tdx() {
-	install_image "${DEFAULT_HOST_OS}" "tdx"
+	install_image "tdx"
 }
 
 #Install guest initrd
 install_initrd() {
-	local host_os="${1:-"${DEFAULT_HOST_OS}"}"
-	local initrd_suffix="${2:-}"
+	local key="${1:-}"
 
-	if [ "${host_os}" = "${DEFAULT_HOST_OS}" ]; then
-		initrd_type="initrd"
-		is_default="yes"
-	else
-		initrd_type="initrd-${host_os}"
-		is_default="no"
-	fi
-
-	if [ -n "${initrd_suffix}" ]; then
-		initrd_type+="-${initrd_suffix}"
+	initrd_type="initrd"
+	if [ -n "${key}" ]; then
+		initrd_type="initrd-${key}"
 	fi
 
 	local jenkins="${jenkins_url}/job/kata-containers-main-rootfs-${initrd_type}-$(uname -m)/${cached_artifacts_path}"
@@ -228,15 +220,15 @@ install_initrd() {
 
 	info "Create initrd"
 
-	if [ "${initrd_suffix}" = "sev" ]; then
-		os_name="$(get_from_kata_deps "assets.initrd.host_os.${host_os}.architecture.${ARCH}.sev.name")"
-		os_version="$(get_from_kata_deps "assets.initrd.host_os.${host_os}.architecture.${ARCH}.sev.version")"
+	if [ -n "${key}" ]; then
+		os_name="$(get_from_kata_deps "assets.initrd.architecture.${ARCH}.${key}.name")"
+		os_version="$(get_from_kata_deps "assets.initrd.architecture.${ARCH}.${key}.version")"
 	else
-		os_name="$(get_from_kata_deps "assets.initrd.host_os.${host_os}.architecture.${ARCH}.name")"
-		os_version="$(get_from_kata_deps "assets.initrd.host_os.${host_os}.architecture.${ARCH}.version")"
+		os_name="$(get_from_kata_deps "assets.initrd.architecture.${ARCH}.name")"
+		os_version="$(get_from_kata_deps "assets.initrd.architecture.${ARCH}.version")"
 	fi
 
-	"${rootfs_builder}" --isdefault="${is_default}"  --osname="${os_name}" --osversion="${os_version}" --imagetype=initrd --prefix="${prefix}" --destdir="${destdir}" --image_initrd_suffix="${initrd_suffix}"
+	"${rootfs_builder}" --osname="${os_name}" --osversion="${os_version}" --imagetype=initrd --prefix="${prefix}" --destdir="${destdir}" --image_initrd_suffix="${key}"
 }
 
 #Install Mariner guest initrd
@@ -246,7 +238,7 @@ install_initrd_mariner() {
 
 #Install guest initrd for sev
 install_initrd_sev() {
-	install_initrd "${DEFAULT_HOST_OS}" "sev"
+	install_initrd "sev"
 }
 
 #Install kernel component helper

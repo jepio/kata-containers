@@ -120,26 +120,25 @@ assets:
       Root filesystem disk image used to boot the guest virtual
       machine.
     url: "https://github.com/kata-containers/kata-containers/tools/osbuilder"
-    host_os:
-      cbl-mariner:
-        architecture:
-          x86_64:
-            name: "cbl-mariner"
-            version: "2.0"
-      ubuntu:
-        architecture:
-          aarch64:
-            name: "ubuntu"
-            version: "latest"
-          ppc64le:
-            name: "ubuntu"
-            version: "latest"
-          s390x:
-            name: "ubuntu"
-            version: "latest"
-          x86_64:
-            name: &default-image-name "ubuntu"
-            version: "latest"
+    architecture:
+      aarch64:
+        name: *default-image-name
+        version: *default-image-version
+      ppc64le:
+        name: *default-image-name
+        version: *default-image-version
+      s390x:
+        name: *default-image-name
+        version: *default-image-version
+      x86_64:
+        name: &default-image-name "ubuntu"
+        version: &default-image-version "latest"
+        tdx:
+          name: *default-image-name
+          version: *default-image-version
+        cbl-mariner:
+          name: "cbl-mariner"
+          version: "2.0"
     meta:
       image-type: *default-image-name
 
@@ -148,31 +147,27 @@ assets:
       Root filesystem initrd used to boot the guest virtual
       machine.
     url: "https://github.com/kata-containers/kata-containers/tools/osbuilder"
-    host_os:
-      cbl-mariner:
-        architecture:
-          x86_64:
-            name: "cbl-mariner"
-            version: "2.0"
-      ubuntu:
-        architecture:
-          aarch64:
-            name: &default-initrd-name "alpine"
-            version: &default-initrd-version "3.15"
-          # Do not use Alpine on ppc64le & s390x, the agent cannot use musl because
-          # there is no such Rust target
-          ppc64le:
-            name: &glibc-initrd-name "ubuntu"
-            version: &glibc-initrd-version "20.04"
-          s390x:
-            name: *glibc-initrd-name
-            version: *glibc-initrd-version
-          x86_64:
-            name: *default-initrd-name
-            version: *default-initrd-version
-            sev:
-              name: *glibc-initrd-name
-              version: *glibc-initrd-version
+    architecture:
+      aarch64:
+        name: &default-initrd-name "alpine"
+        version: &default-initrd-version "3.15"
+      # Do not use Alpine on ppc64le & s390x, the agent cannot use musl because
+      # there is no such Rust target
+      ppc64le:
+        name: &glibc-initrd-name "ubuntu"
+        version: &glibc-initrd-version "20.04"
+      s390x:
+        name: *glibc-initrd-name
+        version: *glibc-initrd-version
+      x86_64:
+        name: *default-initrd-name
+        version: *default-initrd-version
+        sev:
+          name: *glibc-initrd-name
+          version: *glibc-initrd-version
+        cbl-mariner:
+          name: "cbl-mariner"
+          version: "2.0"
 
   kernel:
     description: "Linux kernel optimised for virtual machines"
