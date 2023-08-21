@@ -230,8 +230,10 @@ run_vm() {
 	memory="16384M"
 	cpus=$(nproc)
 	machine_type="q35"
+	ls -la /dev/kvm
+	id
 
-	/usr/bin/qemu-system-${arch} -m "${memory}" -smp cpus="${cpus}" \
+	sudo /usr/bin/qemu-system-${arch} -m "${memory}" -smp cpus="${cpus}" \
 	   -cpu host,host-phys-bits \
 	   -machine ${machine_type},accel=kvm,kernel_irqchip=split \
 	   -device intel-iommu,intremap=on,caching-mode=on,device-iotlb=on \
