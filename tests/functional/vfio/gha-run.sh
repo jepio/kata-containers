@@ -19,6 +19,10 @@ function install_dependencies() {
 
 function run() {
 	info "Running cri-containerd tests using ${KATA_HYPERVISOR} hypervisor"
+	# TMP! do this so that the dev-loop is quick
+	git fetch --depth=1 https://github.com/jepio/kata-containers refs/heads/vfio-part-2
+	git checkout -f FETCH_HEAD
+	bash -x "${vfio_dir}"/vfio_jenkins_job_build.sh
 }
 
 function main() {
