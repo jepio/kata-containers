@@ -227,7 +227,7 @@ run_vm() {
 	config_iso="$2"
 	disable_modern="off"
 	hostname="$(hostname)"
-	memory="16384M"
+	memory="8192M"
 	cpus=$(nproc)
 	machine_type="q35"
 	ls -la /dev/kvm
