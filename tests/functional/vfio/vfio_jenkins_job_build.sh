@@ -183,8 +183,8 @@ ${environment}
     kata_tarball_dir="kata-artifacts"
     install_kata
 
-    bash -x /workspace/tests/functional/vfio/run.sh -s false -p \${KATA_HYPERVISOR} -m q35 -i image
-    bash -x /workspace/tests/functional/vfio/run.sh -s true -p \${KATA_HYPERVISOR} -m q35 -i image
+    sudo bash -x /workspace/tests/functional/vfio/run.sh -s false -p \${KATA_HYPERVISOR} -m q35 -i image
+    sudo bash -x /workspace/tests/functional/vfio/run.sh -s true -p \${KATA_HYPERVISOR} -m q35 -i image
 
   path: /home/${USER}/run.sh
   permissions: '0755'
