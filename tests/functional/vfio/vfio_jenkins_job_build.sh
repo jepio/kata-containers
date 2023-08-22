@@ -102,6 +102,16 @@ users:
   uid: "1000"
 write_files:
 - content: |
+    [main]
+    fastestmirror=True
+    gpgcheck=1
+    max_parallel_downloads=10
+    installonly_limit=2
+    clean_requirements_on_remove=True
+    keepcache=True
+    ip_resolve=4
+  path: /etc/dnf/dnf.conf
+- content: |
 ${environment}
   path: /etc/environment
 - content: |
@@ -148,8 +158,7 @@ ${environment}
 
     # Make sure the packages were installed
     # Sometimes cloud-init is unable to install them
-    sudo dnf makecache
-    sudo dnf install -y git make pciutils driverctl
+    sudo dnf install -y git wget pciutils driverctl
 
     git config --global user.email "foo@bar"
     git config --global user.name "Foo Bar"
