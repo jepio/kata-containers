@@ -14,11 +14,11 @@ set -o nounset
 set -o pipefail
 set -o errtrace
 
-cidir=$(dirname "$0")
+cidir=$(readlink -f $(dirname "$0"))
 
 source /etc/os-release || source /usr/lib/os-release
 # <CHANGES HERE>
-#source "${cidir}/lib.sh"
+source "${cidir}/../../common.bash"
 export WORKSPACE="${WORKSPACE:-${cidir}/../../..}"
 export GIT_URL="https://github.com/kata-containers/kata-containers.git"
 # </CHANGES>
