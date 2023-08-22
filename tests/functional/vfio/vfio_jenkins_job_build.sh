@@ -19,8 +19,9 @@ cidir=$(readlink -f $(dirname "$0"))
 source /etc/os-release || source /usr/lib/os-release
 # <CHANGES HERE>
 source "${cidir}/../../common.bash"
-export WORKSPACE="${WORKSPACE:-${cidir}/../../..}"
+export WORKSPACE="${WORKSPACE:-${HOME}}"
 export GIT_URL="https://github.com/kata-containers/kata-containers.git"
+export KATA_HYPERVISOR="${KATA_HYPERVISOR:-qemu}"
 # </CHANGES>
 
 http_proxy=${http_proxy:-}
@@ -152,7 +153,7 @@ ${environment}
     export PATH=\${GOPATH}/bin:/usr/local/go/bin:/usr/sbin:\${PATH}
     export GOROOT="/usr/local/go"
     export KUBERNETES="no"
-    export USE_DOCKER="true"
+    #export USE_DOCKER="true"
     export ghprbPullId
     export ghprbTargetBranch
 
@@ -167,8 +168,22 @@ ${environment}
     tests_repo_dir="\${GOPATH}/src/\${tests_repo}"
     trap "cd \${tests_repo_dir}; sudo -E PATH=\$PATH .ci/teardown.sh ${artifacts_dir} || true; sudo chown -R \${USER} ${artifacts_dir}" EXIT
 
-    curl -OL https://raw.githubusercontent.com/kata-containers/tests/\${ghprbTargetBranch}/.ci/ci_entry_point.sh
-    bash -x ci_entry_point.sh "${GIT_URL}"
+    sudo mkdir -p /workspace
+    sudo mount -t 9p -o access=any,trans=virtio,version=9p2000.L workspace /workspace
+
+    pushd /workspace
+    source tests/common.bash
+    ensure_yq
+    cri_containerd=\$(get_from_kata_deps "externals.containerd.lts")
+    cri_tools=\$(get_from_kata_deps "externals.critools.latest")
+    install_cri_containerd \${cri_containerd}
+    install_cri_tools \${cri_tools}
+
+    kata_tarball_dir="kata-artifacts"
+    install_kata
+
+    bash -x /workspace/tests/functional/vfio/run.sh -s false -p \${KATA_HYPERVISOR} -m q35 -i image
+    bash -x /workspace/tests/functional/vfio/run.sh -s true -p \${KATA_HYPERVISOR} -m q35 -i image
 
   path: /home/${USER}/run.sh
   permissions: '0755'
@@ -252,7 +267,10 @@ run_vm() {
 	   -netdev user,hostfwd=tcp:${vm_ip}:${vm_port}-:22,hostname="${hostname}",id=net0 \
 	   -device virtio-net-pci,netdev=net0,disable-legacy=on,disable-modern="${disable_modern}",iommu_platform=on,ats=on \
 	   -netdev user,id=net1 \
-	   -device virtio-net-pci,netdev=net1,disable-legacy=on,disable-modern="${disable_modern}",iommu_platform=on,ats=on
+	   -device virtio-net-pci,netdev=net1,disable-legacy=on,disable-modern="${disable_modern}",iommu_platform=on,ats=on \
+	   -fsdev local,path=${repo_root_dir},security_model=passthrough,id=fs0 \
+	   -device virtio-9p-pci,fsdev=fs0,mount_tag=workspace
+
 }
 
 install_dependencies() {
