@@ -231,10 +231,10 @@ pull_fedora_cloud_image() {
 	sudo mount "${loop}p2" /mnt
 
 	# add intel_iommu=on to the guest kernel command line
-	kernelopts="intel_iommu=on iommu=pt selinux=0"
+	kernelopts="intel_iommu=on iommu=pt selinux=0 mitigations=off idle=poll kvm.tdp_mmu=0"
 	entries=$(sudo ls /mnt/loader/entries/)
 	for entry in ${entries}; do
-		sudo sed -i '/^options /  s/$/ intel_iommu=on iommu=pt selinux=0 /g' /mnt/loader/entries/"${entry}"
+		sudo sed -i '/^options /  s/$/ '"${kernelopts}"' /g' /mnt/loader/entries/"${entry}"
 	done
 	sudo sed -i 's|kernelopts="|kernelopts="'"${kernelopts}"'|g' /mnt/grub2/grub.cfg
 	sudo sed -i 's|kernelopts=|kernelopts='"${kernelopts}"'|g' /mnt/grub2/grubenv
@@ -252,7 +252,7 @@ run_vm() {
 	disable_modern="off"
 	hostname="$(hostname)"
 	memory="8192M"
-	cpus=$(nproc)
+	cpus=2
 	machine_type="q35"
 	ls -la /dev/kvm
 	id
