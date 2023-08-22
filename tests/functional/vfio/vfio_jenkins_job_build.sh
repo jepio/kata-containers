@@ -166,7 +166,8 @@ ${environment}
 
     tests_repo="github.com/kata-containers/tests"
     tests_repo_dir="\${GOPATH}/src/\${tests_repo}"
-    trap "cd \${tests_repo_dir}; sudo -E PATH=\$PATH .ci/teardown.sh ${artifacts_dir} || true; sudo chown -R \${USER} ${artifacts_dir}" EXIT
+    #trap "cd \${tests_repo_dir}; sudo -E PATH=\$PATH .ci/teardown.sh ${artifacts_dir} || true; sudo chown -R \${USER} ${artifacts_dir}" EXIT
+    trap "sleep 999999" EXIT
 
     sudo mkdir -p /workspace
     sudo mount -t 9p -o access=any,trans=virtio,version=9p2000.L workspace /workspace
