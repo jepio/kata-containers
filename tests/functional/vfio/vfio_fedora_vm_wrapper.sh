@@ -262,28 +262,6 @@ run_vm() {
 
 }
 
-install_dependencies() {
-	case "${ID}" in
-		ubuntu)
-			# cloud image dependencies
-			deps=(xorriso curl qemu-utils openssh-client)
-
-			sudo apt-get update
-			sudo apt-get install -y ${deps[@]} qemu-system-x86
-			;;
-		fedora)
-			# cloud image dependencies
-			deps=(xorriso curl qemu-img openssh)
-
-			sudo dnf install -y ${deps[@]} qemu-system-x86-core
-			;;
-
-		"*")
-			die "Unsupported distro: ${ID}"
-			;;
-	esac
-}
-
 ssh_vm() {
 	cmd=$@
 	ssh -q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o IdentitiesOnly=yes -i "${ssh_key_file}" -p "${vm_port}" "${USER}@${vm_ip}" "${cmd}"
