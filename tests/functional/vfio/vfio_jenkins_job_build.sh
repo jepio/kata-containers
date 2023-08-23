@@ -146,16 +146,10 @@ ${environment}
         sleep 5;
     done
 
-    export FORCE_JENKINS_JOB_BUILD=1
     export DEBUG=true
-    export CI_JOB="VFIO"
     export GOPATH=\${WORKSPACE}/go
     export PATH=\${GOPATH}/bin:/usr/local/go/bin:/usr/sbin:\${PATH}
     export GOROOT="/usr/local/go"
-    export KUBERNETES="no"
-    #export USE_DOCKER="true"
-    export ghprbPullId
-    export ghprbTargetBranch
 
     # Make sure the packages were installed
     # Sometimes cloud-init is unable to install them
@@ -164,13 +158,9 @@ ${environment}
     git config --global user.email "foo@bar"
     git config --global user.name "Foo Bar"
 
-    tests_repo="github.com/kata-containers/tests"
-    tests_repo_dir="\${GOPATH}/src/\${tests_repo}"
-    #trap "cd \${tests_repo_dir}; sudo -E PATH=\$PATH .ci/teardown.sh ${artifacts_dir} || true; sudo chown -R \${USER} ${artifacts_dir}" EXIT
-    trap "sleep 999999" EXIT
-
     sudo mkdir -p /workspace
     sudo mount -t 9p -o access=any,trans=virtio,version=9p2000.L workspace /workspace
+    trap "cd \${tests_repo_dir}; sudo -E PATH=\$PATH .ci/teardown.sh ${artifacts_dir} || true; sudo chown -R \${USER} ${artifacts_dir}" EXIT
 
     pushd /workspace
     source tests/common.bash
@@ -183,8 +173,8 @@ ${environment}
     kata_tarball_dir="kata-artifacts"
     install_kata
 
-    sudo bash -x /workspace/tests/functional/vfio/run.sh -s false -p \${KATA_HYPERVISOR} -m q35 -i image
-    sudo bash -x /workspace/tests/functional/vfio/run.sh -s true -p \${KATA_HYPERVISOR} -m q35 -i image
+    sudo /workspace/tests/functional/vfio/run.sh -s false -p \${KATA_HYPERVISOR} -m q35 -i image
+    sudo /workspace/tests/functional/vfio/run.sh -s true -p \${KATA_HYPERVISOR} -m q35 -i image
 
   path: /home/${USER}/run.sh
   permissions: '0755'
@@ -255,8 +245,6 @@ run_vm() {
 	memory="8192M"
 	cpus=2
 	machine_type="q35"
-	ls -la /dev/kvm
-	id
 
 	sudo /usr/bin/qemu-system-${arch} -m "${memory}" -smp cpus="${cpus}" \
 	   -cpu host,host-phys-bits \
